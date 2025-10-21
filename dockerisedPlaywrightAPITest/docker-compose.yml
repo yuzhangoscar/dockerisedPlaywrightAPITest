@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # Fake API server providing mock endpoints
+  fake-api:
+    build:
+      context: ./docker/fake-api
+      dockerfile: Dockerfile
+    container_name: fake-api-server
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - ./docker/volumes/logs:/app/logs
+    networks:
+      - api-test-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Playwright test runner
+  test-runner:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    container_name: playwright-test-runner
+    depends_on:
+      fake-api:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=test
+      - API_BASE_URL=http://fake-api:3000
+    volumes:
+      - ./docker/volumes/logs:/app/logs
+      - ./src:/app/src:ro
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+    networks:
+      - api-test-network
+    working_dir: /app
+    command: ["npm", "test"]
+
+networks:
+  api-test-network:
+    driver: bridge
+    name: playwright-api-test
+
+volumes:
+  test-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./docker/volumes/logs
