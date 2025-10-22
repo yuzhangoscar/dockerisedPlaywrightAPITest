@@ -67,9 +67,12 @@ export class ApiClient {
       }
 
       // Create standardized response object
+      // For successful responses (2xx), put data in data field
+      // For error responses (4xx, 5xx), put response in error field regardless of expectedStatus
+      const isSuccessStatus = response.status() >= 200 && response.status() < 300;
       const apiResponse: ApiResponse<T> = {
-        data: response.status() === expectedStatus ? responseData as T : undefined,
-        error: response.status() !== expectedStatus ? responseData as ApiError : undefined,
+        data: isSuccessStatus ? responseData as T : undefined,
+        error: !isSuccessStatus ? responseData as ApiError : undefined,
         status: response.status(),
         headers: Object.fromEntries(response.headersArray().map(h => [h.name, h.value]))
       };
