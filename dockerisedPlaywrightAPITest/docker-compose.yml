@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Fake API server providing mock endpoints
   fake-api:
