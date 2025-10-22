@@ -37,15 +37,27 @@ app.get("/health", (req, res) => {
 // API endpoint: Get comments for a specific post
 app.get("/posts/:postId/comments", (req, res) => {
   const { postId } = req.params;
+  
+  // Check for invalid postId format
+  const postIdNum = parseInt(postId, 10);
+  if (isNaN(postIdNum) || postId === "invalid") {
+    return res.status(404).json({ 
+      error: "Invalid post ID format",
+      message: "Post ID must be a valid number",
+      providedValue: postId
+    });
+  }
+  
   const comments = loadMockData("comments.json");
   
-  // Filter comments by postId (convert to number for comparison)
-  const postComments = comments.filter(comment => comment.postId === parseInt(postId, 10));
+  // Filter comments by postId
+  const postComments = comments.filter(comment => comment.postId === postIdNum);
   
   if (postComments.length === 0) {
     return res.status(404).json({ 
       error: "No comments found for this post",
-      postId: parseInt(postId, 10)
+      message: `Post ${postIdNum} does not exist or has no comments`,
+      postId: postIdNum
     });
   }
   

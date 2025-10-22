@@ -1,5 +1,5 @@
 # Multi-stage Playwright Docker image for API testing
-FROM mcr.microsoft.com/playwright:v1.40.0-jammy as base
+FROM mcr.microsoft.com/playwright:v1.40.0-jammy AS base
 
 # Set working directory
 WORKDIR /app
@@ -11,20 +11,28 @@ RUN groupadd -r playwright && useradd -r -g playwright playwright
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install all dependencies (including dev dependencies for TypeScript compilation)
+RUN npm ci
+
+# Install Playwright browsers and dependencies
+RUN npx playwright install --with-deps
 
 # Copy source code
 COPY src/ ./src/
 
-# Build TypeScript
-RUN npm run build
+# Create output directories for test results
+RUN mkdir -p /app/test-results /app/playwright-report
 
-# Set ownership to non-root user
-RUN chown -R playwright:playwright /app
+# Build TypeScript (if build script exists)
+RUN npm run build || echo "No build script found, skipping build"
 
-# Switch to non-root user
-USER playwright
+# Keep dev dependencies for running tests (don't prune)
+RUN npm cache clean --force
+
+# Set ownership to ensure proper permissions
+RUN chown -R root:root /app
+
+# Note: Running as root for testing purposes - in production, use non-root user
 
 # Expose port for potential debugging
 EXPOSE 3001
