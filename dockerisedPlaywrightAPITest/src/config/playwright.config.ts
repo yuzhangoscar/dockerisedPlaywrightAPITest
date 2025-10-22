@@ -32,20 +32,20 @@ export default defineConfig({
   // Reporter configuration
   reporter: [
     ["html", { 
-      outputFolder: "playwright-report",
+      outputFolder: "/app/playwright-report",
       open: "never" 
     }],
     ["json", { 
-      outputFile: "test-results/results.json" 
+      outputFile: "/app/test-results/results.json" 
     }],
     ["junit", { 
-      outputFile: "test-results/results.xml" 
+      outputFile: "/app/test-results/results.xml" 
     }],
     ["list"]
   ],
   
   // Output directories
-  outputDir: "test-results/",
+  outputDir: "/app/test-results/",
   
   // Global test setup
   use: {
@@ -89,11 +89,6 @@ export default defineConfig({
     }
   ],
 
-  // Development server configuration (for local testing)
-  webServer: process.env.CI ? undefined : {
-    command: "node docker/fake-api/server.js",
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-    timeout: 30 * 1000 // 30 seconds to start
-  }
+  // Skip webServer in Docker environment since fake-api runs separately
+  // webServer: undefined
 });
